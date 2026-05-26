@@ -47,7 +47,7 @@ export default function SpeakeasiesPage() {
         `)
         .order("date", { ascending: true });
 
-      setSpeakeasies((rows as DbSpeakeasy[]) ?? []);
+      setSpeakeasies((rows as unknown as DbSpeakeasy[]) ?? []);
 
       if (profile?.id) {
         const [{ data: mine }, { data: favs }] = await Promise.all([
