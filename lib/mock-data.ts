@@ -1,0 +1,117 @@
+import { User, Speakeasy } from "./types";
+
+export const CURRENT_USER: User = {
+  id: "u1",
+  name: "Martina",
+  age: 38,
+  city: "Buenos Aires",
+  avatar: "M",
+  bio: "Diseñadora. Viajera empedernida. Quiero practicar inglés para poder trabajar con clientes del exterior.",
+};
+
+export const USERS: User[] = [
+  CURRENT_USER,
+  { id: "u2", name: "Javier", age: 42, city: "Rosario", avatar: "J", bio: "Contador. Me gusta el cine y los viajes largos." },
+  { id: "u3", name: "Luciana", age: 35, city: "Córdoba", avatar: "L", bio: "Médica. Quiero mejorar mi inglés para publicar investigaciones." },
+  { id: "u4", name: "Rodrigo", age: 39, city: "Buenos Aires", avatar: "R", bio: "Músico. Fan de los 90s y del rock anglosajón." },
+  { id: "u5", name: "Sofía", age: 33, city: "Mendoza", avatar: "S", bio: "Chef. Quiero poder seguir recetas en inglés y conocer gente nueva." },
+  { id: "u6", name: "Andrés", age: 45, city: "Buenos Aires", avatar: "A", bio: "IT Manager. Necesito mejorar el inglés para reuniones internacionales." },
+];
+
+export const SPEAKEASIES: Speakeasy[] = [
+  {
+    id: "sp1",
+    title: "El viaje que soñás tener",
+    topic: "viajes",
+    description: "¿A dónde irías si pudieras ir a cualquier lugar mañana? Vamos a hablar de destinos soñados, experiencias de viaje y cómo manejarse en inglés fuera del país.",
+    date: "2026-05-28",
+    time: "19:00",
+    meetingUrl: "https://meet.google.com/abc-defg-hij",
+    facilitatorId: "u6",
+    participants: ["u2", "u3"],
+    maxParticipants: 4,
+    level: "intermedio",
+  },
+  {
+    id: "sp2",
+    title: "Canciones que te cambiaron la vida",
+    topic: "musica",
+    description: "Una canción, una historia. Cada uno trae su canción favorita en inglés y cuenta por qué lo marcó. Vamos a hablar de letras, artistas y emociones.",
+    date: "2026-05-29",
+    time: "20:00",
+    meetingUrl: "https://meet.google.com/xyz-uvwx-yz",
+    facilitatorId: "u4",
+    participants: ["u5"],
+    maxParticipants: 4,
+    level: "básico",
+  },
+  {
+    id: "sp3",
+    title: "¿Qué estás viendo ahora?",
+    topic: "series",
+    description: "Series, películas, documentales. ¿Qué estás mirando? ¿Qué recomendarías? Un espacio para opinar, debatir y practicar el inglés que usamos cuando hablamos de entretenimiento.",
+    date: "2026-05-30",
+    time: "21:00",
+    meetingUrl: "https://meet.google.com/mnop-qrst-uv",
+    facilitatorId: "u3",
+    participants: ["u2", "u4", "u5"],
+    maxParticipants: 4,
+    level: "intermedio",
+  },
+  {
+    id: "sp4",
+    title: "Trabajar con el mundo",
+    topic: "trabajo",
+    description: "Inglés para reuniones, emails, entrevistas y negociaciones. Casos reales, situaciones concretas. Para los que quieren dar el salto al trabajo internacional.",
+    date: "2026-06-02",
+    time: "18:30",
+    meetingUrl: "https://meet.google.com/abcd-efgh-ij",
+    facilitatorId: "u6",
+    participants: [],
+    maxParticipants: 4,
+    level: "avanzado",
+  },
+  {
+    id: "sp5",
+    title: "First dates & awkward silences",
+    topic: "amor",
+    description: "Citas, apps de dating, el amor después de los 30. Vamos a hablar de relaciones, expectativas y el inglés para coquetear (con gracia).",
+    date: "2026-06-03",
+    time: "20:30",
+    meetingUrl: "https://meet.google.com/wxyz-abcd-ef",
+    facilitatorId: "u2",
+    participants: ["u3"],
+    maxParticipants: 4,
+    level: "básico",
+  },
+  {
+    id: "sp6",
+    title: "Vivir en otro país: la realidad",
+    topic: "mundo",
+    description: "¿Pensaste en irte a vivir afuera? ¿Ya lo hiciste? Vamos a hablar de la experiencia de vivir en otro país, el choque cultural y cómo el inglés abre puertas.",
+    date: "2026-06-05",
+    time: "19:30",
+    meetingUrl: "https://meet.google.com/ghij-klmn-op",
+    facilitatorId: "u5",
+    participants: ["u6"],
+    maxParticipants: 4,
+    level: "intermedio",
+  },
+];
+
+export const TOPIC_META: Record<string, { emoji: string; label: string; color: string; bg: string }> = {
+  viajes:      { emoji: "✈️", label: "Viajes",    color: "#FF6B6B", bg: "#FFE4E1" },
+  musica:      { emoji: "🎵", label: "Música",    color: "#845EC2", bg: "#E8E0FF" },
+  series:      { emoji: "🍿", label: "Series",    color: "#FF9E4F", bg: "#FFF3E0" },
+  trabajo:     { emoji: "💼", label: "Trabajo",   color: "#06D6A0", bg: "#E0F7F1" },
+  amor:        { emoji: "❤️", label: "Amor",      color: "#FF6B6B", bg: "#FCE4EC" },
+  mundo:       { emoji: "🌍", label: "Mundo",     color: "#845EC2", bg: "#E3F2FD" },
+  gastronomia: { emoji: "🍳", label: "Gastronomía",color: "#FF9E4F", bg: "#FFF8E1" },
+  deporte:     { emoji: "⚽", label: "Deporte",   color: "#06D6A0", bg: "#E8F5E9" },
+};
+
+export const LEVEL_META = {
+  básico:     { label: "Básico",      color: "#06D6A0", bg: "rgba(6,214,160,.12)" },
+  intermedio: { label: "Intermedio",  color: "#FF9E4F", bg: "rgba(255,158,79,.12)" },
+  avanzado:   { label: "Avanzado",    color: "#845EC2", bg: "rgba(132,94,194,.12)" },
+};
