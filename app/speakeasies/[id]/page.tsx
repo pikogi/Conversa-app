@@ -68,7 +68,7 @@ export default function SpeakeasyDetailPage() {
       .select(`id, title, topic, description, date, time, meeting_url, facilitator_id, level, max_participants, participants ( user_id, profiles ( id, name, avatar, city, bio, english_level ) ), profiles!facilitator_id ( id, name, avatar, city, bio )`)
       .eq("id", id)
       .single();
-    if (data) setSpeakeasy(data as Speakeasy);
+    if (data) setSpeakeasy(data as unknown as Speakeasy);
     setJoining(false);
   };
 
@@ -82,7 +82,7 @@ export default function SpeakeasyDetailPage() {
       .select(`id, title, topic, description, date, time, meeting_url, facilitator_id, level, max_participants, participants ( user_id, profiles ( id, name, avatar, city, bio, english_level ) ), profiles!facilitator_id ( id, name, avatar, city, bio )`)
       .eq("id", id)
       .single();
-    if (data) setSpeakeasy(data as Speakeasy);
+    if (data) setSpeakeasy(data as unknown as Speakeasy);
     setLeaving(false);
   };
 
