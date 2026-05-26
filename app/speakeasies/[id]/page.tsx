@@ -52,7 +52,7 @@ export default function SpeakeasyDetailPage() {
       .single()
       .then(({ data, error }) => {
         if (error || !data) { setNotFound(true); }
-        else { setSpeakeasy(data as Speakeasy); }
+        else { setSpeakeasy(data as unknown as Speakeasy); }
         setPageLoading(false);
       });
   }, [id]);
