@@ -68,6 +68,25 @@ export default function CrearSpeakeasyPage() {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      fetch("/api/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: user.email,
+          name: profile.name,
+          title: form.title,
+          date: form.date,
+          time: form.time,
+          meetingUrl: form.meetingUrl,
+          level: form.level,
+          topic: form.topic,
+          type: "created",
+        }),
+      });
+    }
+
     setCreatedId(data.id);
   };
 
