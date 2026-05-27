@@ -30,14 +30,21 @@ export default async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && !isPublic) {
-    return NextResponse.redirect(new URL("/auth", request.url));
-  }
+    if (!user && !isPublic) {
+      return NextResponse.redirect(new URL("/auth", request.url));
+    }
 
-  if (user && isPublic) {
-    return NextResponse.redirect(new URL("/speakeasies", request.url));
+    if (user && isPublic) {
+      return NextResponse.redirect(new URL("/speakeasies", request.url));
+    }
+  } catch {
+    // Si Supabase falla, dejamos pasar la request sin redirigir
+    if (!isPublic) {
+      return NextResponse.redirect(new URL("/auth", request.url));
+    }
   }
 
   return response;
