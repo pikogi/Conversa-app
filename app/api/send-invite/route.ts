@@ -1,7 +1,7 @@
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 import { NextRequest, NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export async function POST(req: NextRequest) {
   const { to, name, title, date, time, meetingUrl, level, topic } = await req.json();
@@ -17,11 +17,13 @@ export async function POST(req: NextRequest) {
     hour: "2-digit", minute: "2-digit",
   });
 
-  const { error } = await resend.emails.send({
-    from: "Conversa <onboarding@resend.dev>",
-    to,
-    subject: `¡Te anotaste a "${title}"! 🎉`,
-    html: `
+  try {
+    await sgMail.send({
+      from: { email: "hi@repeat.la", name: "Conversa" },
+      replyTo: "no-reply@repeat.la",
+      to,
+      subject: `¡Te anotaste a "${title}"! 🎉`,
+      html: `
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
@@ -73,10 +75,9 @@ export async function POST(req: NextRequest) {
   </div>
 </body>
 </html>`,
-  });
-
-  if (error) {
-    return NextResponse.json({ error }, { status: 500 });
+    });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
