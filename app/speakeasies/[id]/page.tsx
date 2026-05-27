@@ -62,6 +62,26 @@ export default function SpeakeasyDetailPage() {
     setJoining(true);
     const supabase = createClient();
     await supabase.from("participants").insert({ speakeasy_id: speakeasy.id, user_id: profile.id });
+
+    // Enviar email de confirmación
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      fetch("/api/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: user.email,
+          name: profile.name,
+          title: speakeasy.title,
+          date: speakeasy.date,
+          time: speakeasy.time,
+          meetingUrl: speakeasy.meeting_url,
+          level: speakeasy.level,
+          topic: speakeasy.topic,
+        }),
+      });
+    }
+
     // Refetch
     const { data } = await supabase
       .from("speakeasies")
