@@ -9,7 +9,14 @@ export type Profile = {
   avatar: string;
   role: "user" | "facilitator";
   english_level: string;
+  gender?: string | null;
 };
+
+export function facilitatorLabel(gender?: string | null) {
+  if (gender === "femenino") return "Facilitadora";
+  if (gender === "masculino") return "Facilitador";
+  return "Facilitador/a";
+}
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -23,7 +30,7 @@ export function useProfile() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("id, name, avatar, role, english_level, age, city, bio, topics")
+        .select("id, name, avatar, role, english_level, gender, age, city, bio, topics")
         .eq("id", user.id)
         .maybeSingle();
 

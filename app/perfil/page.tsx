@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { useProfile } from "@/lib/hooks/useProfile";
+import { useProfile, facilitatorLabel } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 import { TOPIC_META, LEVEL_META } from "@/lib/mock-data";
 
@@ -62,7 +62,8 @@ export default function PerfilPage() {
         .from("participants")
         .select(`
           speakeasies ( id, title, topic, date, time, level, max_participants,
-            participants ( user_id )
+            participants ( user_id, profiles ( id, name, avatar ) ),
+            profiles!facilitator_id ( id, name, avatar )
           )
         `)
         .eq("user_id", profile!.id);
@@ -140,7 +141,7 @@ export default function PerfilPage() {
               <div className="flex flex-wrap gap-2 mt-3">
                 {isFacilitator && (
                   <span style={{ padding: "4px 12px", borderRadius: 50, background: "rgba(132,94,194,.08)", border: "1.5px solid rgba(132,94,194,.2)", color: "#845EC2", fontFamily: "'Nunito', sans-serif", fontSize: ".72rem", fontWeight: 800 }}>
-                    FACILITADORA
+                    {facilitatorLabel((p as any)?.gender).toUpperCase()}
                   </span>
                 )}
                 <span style={{ padding: "4px 12px", borderRadius: 50, background: levelMeta.bg, border: `1.5px solid ${levelMeta.color}30`, color: levelMeta.color, fontFamily: "'Nunito', sans-serif", fontSize: ".72rem", fontWeight: 800 }}>
@@ -240,19 +241,22 @@ export default function PerfilPage() {
                       {s.participants?.length > 0 && (
                         <div className="rounded-2xl p-4 mb-4" style={{ background: "var(--bg)", border: "1px solid rgba(132,94,194,.08)" }}>
                           <p style={{ fontSize: ".7rem", fontWeight: 800, color: "#8E8AA0", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Participantes</p>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {s.participants.map((pt) => (
-                              <div key={pt.user_id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <Link key={pt.user_id} href={`/perfil/${pt.user_id}`}
+                                style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+                                className="hover:opacity-80 transition-opacity">
                                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #845EC2, #C8A4D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: ".8rem", fontWeight: 700, flexShrink: 0 }}>
                                   {pt.profiles?.avatar ?? "?"}
                                 </div>
-                                <div>
+                                <div style={{ flex: 1 }}>
                                   <p style={{ fontSize: ".85rem", fontWeight: 700, color: "#1E1B2E" }}>
                                     {pt.profiles?.name}{pt.profiles?.city ? ` · ${pt.profiles.city}` : ""}
                                   </p>
                                   {pt.profiles?.bio && <p style={{ fontSize: ".75rem", color: "#8E8AA0" }}>{pt.profiles.bio}</p>}
                                 </div>
-                              </div>
+                                <span style={{ fontSize: ".72rem", color: "#845EC2", fontWeight: 700 }}>Ver →</span>
+                              </Link>
                             ))}
                           </div>
                         </div>
@@ -338,21 +342,33 @@ export default function PerfilPage() {
                   const topic = TOPIC_META[s.topic] ?? TOPIC_META["viajes"];
                   const date = new Date(`${s.date}T${s.time}`);
                   return (
-                    <Link key={s.id} href={`/speakeasies/${s.id}`}
-                      className="rounded-2xl p-4 hover:opacity-80 transition-opacity"
-                      style={{ background: "white", border: `2px solid ${topic.color}25`, textDecoration: "none", position: "relative", overflow: "hidden" }}>
+                    <div key={s.id} className="rounded-2xl p-4"
+                      style={{ background: "white", border: `2px solid ${topic.color}25`, position: "relative", overflow: "hidden" }}>
                       <div style={{ position: "absolute", top: -10, right: -10, fontSize: "3.5rem", opacity: .08, userSelect: "none" }}>
                         {topic.emoji}
                       </div>
-                      <p style={{ fontSize: "1.6rem", marginBottom: 6 }}>{topic.emoji}</p>
-                      <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: ".9rem", fontWeight: 700, color: "#1E1B2E", lineHeight: 1.2, marginBottom: 6 }}>{s.title}</p>
-                      <p style={{ fontSize: ".72rem", color: "#8E8AA0", fontWeight: 600 }}>
-                        {date.toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-                      <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 50, background: topic.bg }}>
-                        <span style={{ fontSize: ".68rem", fontWeight: 800, color: topic.color }}>✓ Completado</span>
+                      <Link href={`/speakeasies/${s.id}`} style={{ textDecoration: "none" }}>
+                        <p style={{ fontSize: "1.4rem", marginBottom: 4 }}>{topic.emoji}</p>
+                        <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: ".88rem", fontWeight: 700, color: "#1E1B2E", lineHeight: 1.2, marginBottom: 4 }}>{s.title}</p>
+                        <p style={{ fontSize: ".7rem", color: "#8E8AA0", fontWeight: 600, marginBottom: 8 }}>
+                          {date.toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
+                      </Link>
+                      {/* Participantes */}
+                      <div className="flex gap-1 flex-wrap">
+                        {[(s as any).profiles, ...((s as any).participants ?? []).map((p: any) => p.profiles)]
+                          .filter((p: any) => p && p.id !== profile!.id)
+                          .slice(0, 3)
+                          .map((p: any) => (
+                            <Link key={p.id} href={`/perfil/${p.id}`}
+                              title={p.name}
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white hover:opacity-80 transition-opacity"
+                              style={{ background: "linear-gradient(135deg, #845EC2, #C8A4D4)", textDecoration: "none", flexShrink: 0 }}>
+                              {p.avatar}
+                            </Link>
+                          ))}
                       </div>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>

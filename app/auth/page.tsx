@@ -75,6 +75,7 @@ export default function AuthPage() {
     age: "",
     city: "",
     bio: "",
+    gender: "",
     topics: [] as string[],
   });
 
@@ -146,6 +147,7 @@ export default function AuthPage() {
             age: form.age ? parseInt(form.age) : null,
             city: form.city,
             bio: form.bio,
+            gender: form.gender || null,
             avatar: form.name.charAt(0).toUpperCase(),
             english_level: detectedLevel,
             topics: form.topics,
@@ -284,6 +286,30 @@ export default function AuthPage() {
                     Contanos un poco
                   </h2>
                   <p style={{ color: "#8E8AA0", fontSize: ".9rem" }}>Paso 2 de 3 · Tu perfil</p>
+                </div>
+
+                {/* Género */}
+                <div>
+                  <p style={{ fontSize: ".85rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 8 }}>¿Con qué género te identificás?</p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[
+                      { value: "femenino",   label: "Femenino" },
+                      { value: "masculino",  label: "Masculino" },
+                      { value: "no-binario", label: "No binario" },
+                    ].map((g) => (
+                      <button type="button" key={g.value} onClick={() => set("gender", g.value)}
+                        style={{
+                          flex: 1, padding: "10px 8px", borderRadius: 14, cursor: "pointer",
+                          fontFamily: "'Nunito', sans-serif", fontSize: ".82rem", fontWeight: 700,
+                          border: `1.5px solid ${form.gender === g.value ? "#845EC2" : "rgba(132,94,194,.15)"}`,
+                          background: form.gender === g.value ? "rgba(132,94,194,.08)" : "var(--bg)",
+                          color: form.gender === g.value ? "#845EC2" : "#4A4560",
+                          transition: "all .15s",
+                        }}>
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

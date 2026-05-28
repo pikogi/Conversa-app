@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { TOPIC_META, LEVEL_META, ICE_BREAKERS } from "@/lib/mock-data";
-import { useProfile } from "@/lib/hooks/useProfile";
+import { useProfile, facilitatorLabel } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 
 type Participant = {
@@ -40,6 +40,12 @@ export default function SpeakeasyDetailPage() {
   const [leaving, setLeaving] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [iceIndex, setIceIndex] = useState(0);
+  const [iceTab, setIceTab] = useState<"warmup"|"wouldYouRather"|"hotTake"|"story"|"hypothetical">("warmup");
+  const [copied, setCopied] = useState(false);
+  const [userReview, setUserReview] = useState<{ rating: number; comment: string } | null>(null);
+  const [reviewDraft, setReviewDraft] = useState({ rating: 0, comment: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSaved, setReviewSaved] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -53,9 +59,14 @@ export default function SpeakeasyDetailPage() {
       `)
       .eq("id", id)
       .single()
-      .then(({ data, error }) => {
-        if (error || !data) { setNotFound(true); }
-        else { setSpeakeasy(data as unknown as Speakeasy); }
+      .then(async ({ data, error }) => {
+        if (error || !data) { setNotFound(true); setPageLoading(false); return; }
+        setSpeakeasy(data as unknown as Speakeasy);
+        if (profile?.id) {
+          const { data: rev } = await supabase
+            .from("reviews").select("rating, comment").eq("speakeasy_id", id).eq("reviewer_id", profile.id).single();
+          if (rev) { setUserReview(rev); setReviewSaved(true); }
+        }
         setPageLoading(false);
       });
   }, [id]);
@@ -200,20 +211,21 @@ export default function SpeakeasyDetailPage() {
 
           {/* Facilitador */}
           {facilitator && (
-            <div className="flex items-center gap-3 p-4 rounded-2xl mb-6"
-              style={{ background: "rgba(132,94,194,.06)", border: "1px solid rgba(132,94,194,.1)" }}>
+            <Link href={`/perfil/${speakeasy.facilitator_id}`}
+              className="flex items-center gap-3 p-4 rounded-2xl mb-6 hover:opacity-90 transition-opacity"
+              style={{ background: "rgba(132,94,194,.06)", border: "1px solid rgba(132,94,194,.1)", textDecoration: "none" }}>
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold text-white flex-shrink-0"
                 style={{ background: "linear-gradient(135deg, #845EC2, #C8A4D4)" }}>
                 {facilitator.avatar}
               </div>
-              <div>
-                <p className="text-xs font-bold" style={{ color: "#8E8AA0" }}>Facilitador/a</p>
+              <div className="flex-1">
+                <p className="text-xs font-bold" style={{ color: "#8E8AA0" }}>{facilitatorLabel((facilitator as any)?.gender)} · ver perfil →</p>
                 <p className="text-sm font-bold" style={{ color: "#1E1B2E" }}>
                   {facilitator.name}{facilitator.city ? ` · ${facilitator.city}` : ""}
                 </p>
                 {facilitator.bio && <p className="text-xs mt-0.5" style={{ color: "#4A4560" }}>{facilitator.bio}</p>}
               </div>
-            </div>
+            </Link>
           )}
 
           {/* Participantes */}
@@ -223,8 +235,9 @@ export default function SpeakeasyDetailPage() {
             </p>
             <div className="flex gap-3 flex-wrap">
               {participants.map((pt) => pt.profiles && (
-                <div key={pt.user_id} className="flex items-center gap-2 px-3 py-2 rounded-2xl"
-                  style={{ background: "var(--bg)", border: "1px solid rgba(132,94,194,.1)" }}>
+                <Link key={pt.user_id} href={`/perfil/${pt.user_id}`}
+                  className="flex items-center gap-2 px-3 py-2 rounded-2xl hover:opacity-80 transition-opacity"
+                  style={{ background: "var(--bg)", border: "1px solid rgba(132,94,194,.1)", textDecoration: "none" }}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
                     style={{ background: "linear-gradient(135deg, #FF6B6B, #FF9E4F)" }}>
                     {pt.profiles.avatar}
@@ -233,7 +246,7 @@ export default function SpeakeasyDetailPage() {
                     <p className="text-xs font-bold" style={{ color: "#1E1B2E" }}>{pt.profiles.name}</p>
                     {pt.profiles.city && <p className="text-xs" style={{ color: "#8E8AA0" }}>{pt.profiles.city}</p>}
                   </div>
-                </div>
+                </Link>
               ))}
               {Array.from({ length: spots }).map((_, i) => (
                 <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-2xl"
@@ -250,7 +263,7 @@ export default function SpeakeasyDetailPage() {
           {isFacilitator ? (
             <div className="rounded-2xl p-5 text-center" style={{ background: "rgba(132,94,194,.06)", border: "1.5px solid rgba(132,94,194,.15)" }}>
               <p className="text-base font-bold mb-1" style={{ fontFamily: "'Fredoka', sans-serif", color: "#845EC2" }}>
-                Sos el/la facilitador/a de este grupo
+                Sos {(profile as any)?.gender === "femenino" ? "la" : (profile as any)?.gender === "masculino" ? "el" : "el/la"} {facilitatorLabel((profile as any)?.gender).toLowerCase()} de este grupo
               </p>
               {speakeasy.meeting_url && (
                 <a href={speakeasy.meeting_url} target="_blank" rel="noopener noreferrer"
@@ -296,35 +309,156 @@ export default function SpeakeasyDetailPage() {
             </button>
           )}
         </div>
-        {/* Ice-breakers — solo facilitador */}
-        {isFacilitator && (() => {
-          const questions = ICE_BREAKERS[speakeasy.topic] ?? ICE_BREAKERS["viajes"];
+
+        {/* Review del facilitador — solo participantes, sesión pasada */}
+        {isJoined && !isFacilitator && new Date(`${speakeasy.date}T${speakeasy.time}`) < new Date() && (() => {
+          const handleSubmit = async () => {
+            if (!profile || reviewDraft.rating === 0) return;
+            setSubmittingReview(true);
+            const supabase = createClient();
+            await supabase.from("reviews").upsert({
+              speakeasy_id: speakeasy.id,
+              reviewer_id: profile.id,
+              facilitator_id: speakeasy.facilitator_id,
+              rating: reviewDraft.rating,
+              comment: reviewDraft.comment || null,
+            }, { onConflict: "speakeasy_id,reviewer_id" });
+            setUserReview(reviewDraft);
+            setReviewSaved(true);
+            setSubmittingReview(false);
+          };
+
           return (
-            <div className="rounded-3xl p-6 sm:p-8" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.12)", boxShadow: "0 4px 32px rgba(132,94,194,.1)" }}>
-              <p className="text-xs font-bold mb-4" style={{ color: "#8E8AA0", textTransform: "uppercase", letterSpacing: 1 }}>
-                💬 Preguntas para arrancar la charla
+            <div className="rounded-3xl p-6" style={{ background: "white", border: "1.5px solid rgba(255,158,79,.2)", boxShadow: "0 4px 24px rgba(255,158,79,.08)" }}>
+              <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.05rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 4 }}>
+                ⭐ ¿Cómo estuvo la clase?
               </p>
-              <p className="text-base font-bold leading-snug mb-5" style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.15rem", color: "#1E1B2E" }}>
-                "{questions[iceIndex]}"
+              <p className="text-xs mb-4" style={{ color: "#8E8AA0" }}>
+                Tu reseña se muestra en el perfil del/la facilitador/a.
               </p>
-              <div className="flex items-center justify-between">
-                <div className="flex gap-1.5">
-                  {questions.map((_, i) => (
-                    <button key={i} onClick={() => setIceIndex(i)}
-                      style={{ width: 8, height: 8, borderRadius: "50%", border: "none", cursor: "pointer", background: i === iceIndex ? "#845EC2" : "rgba(132,94,194,.2)", transition: "background .2s" }} />
-                  ))}
+              {reviewSaved && userReview ? (
+                <div className="flex items-center gap-3">
+                  <span style={{ fontSize: "1.3rem", color: "#FF9E4F", letterSpacing: 2 }}>{"★".repeat(userReview.rating)}{"☆".repeat(5 - userReview.rating)}</span>
+                  <span className="text-sm font-bold" style={{ color: "#06D6A0" }}>✓ Reseña guardada</span>
+                  <button onClick={() => setReviewSaved(false)} style={{ marginLeft: "auto", fontSize: ".75rem", color: "#845EC2", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>Editar</button>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setIceIndex((i) => (i - 1 + questions.length) % questions.length)}
-                    className="px-4 py-2 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
-                    style={{ background: "var(--bg)", border: "1.5px solid rgba(132,94,194,.15)", color: "#845EC2", fontFamily: "'Nunito', sans-serif" }}>
-                    ←
+              ) : (
+                <>
+                  <div className="flex gap-2 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button key={star} onClick={() => setReviewDraft((d) => ({ ...d, rating: star }))}
+                        style={{ fontSize: "1.8rem", background: "none", border: "none", cursor: "pointer", transition: "transform .15s", transform: reviewDraft.rating >= star ? "scale(1.1)" : "scale(1)", color: reviewDraft.rating >= star ? "#FF9E4F" : "#D8D4E8" }}>
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <textarea value={reviewDraft.comment} onChange={(e) => setReviewDraft((d) => ({ ...d, comment: e.target.value }))}
+                    placeholder="Contá algo sobre la clase (opcional)…" rows={2}
+                    className="w-full px-4 py-3 rounded-2xl text-sm outline-none resize-none mb-3"
+                    style={{ fontFamily: "'Nunito', sans-serif", background: "var(--bg)", border: "1.5px solid rgba(132,94,194,.15)", color: "#1E1B2E" }}
+                    onFocus={(e) => (e.target.style.borderColor = "#845EC2")}
+                    onBlur={(e) => (e.target.style.borderColor = "rgba(132,94,194,.15)")} />
+                  <button onClick={handleSubmit} disabled={reviewDraft.rating === 0 || submittingReview}
+                    className="w-full py-3 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #FF9E4F, #FF6B6B)", fontFamily: "'Nunito', sans-serif" }}>
+                    {submittingReview ? "Guardando…" : "Publicar reseña"}
                   </button>
-                  <button onClick={() => setIceIndex((i) => (i + 1) % questions.length)}
-                    className="px-4 py-2 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
-                    style={{ background: "#845EC2", color: "white", border: "none", fontFamily: "'Nunito', sans-serif" }}>
-                    Siguiente →
+                </>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Teacher's Toolkit — solo facilitador */}
+        {isFacilitator && (() => {
+          const set = ICE_BREAKERS[speakeasy.topic] ?? ICE_BREAKERS["viajes"];
+          const TABS: { key: typeof iceTab; label: string; icon: string }[] = [
+            { key: "warmup",         label: "Warm-up",          icon: "👋" },
+            { key: "wouldYouRather", label: "Would you rather", icon: "🤔" },
+            { key: "hotTake",        label: "Hot take",         icon: "🔥" },
+            { key: "story",          label: "Story starter",    icon: "📖" },
+            { key: "hypothetical",   label: "Hypothetical",     icon: "💭" },
+          ];
+          const questions = set[iceTab];
+          const q = questions[iceIndex % questions.length];
+
+          const handleCopy = () => {
+            navigator.clipboard.writeText(q);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          };
+
+          const next = () => setIceIndex((i) => (i + 1) % questions.length);
+          const prev = () => setIceIndex((i) => (i - 1 + questions.length) % questions.length);
+
+          return (
+            <div className="rounded-3xl overflow-hidden" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.15)", boxShadow: "0 4px 32px rgba(132,94,194,.1)" }}>
+
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4" style={{ borderBottom: "1px solid rgba(132,94,194,.08)" }}>
+                <p className="text-xs font-bold mb-1" style={{ color: "#8E8AA0", textTransform: "uppercase", letterSpacing: 1 }}>
+                  🎓 Teacher's Toolkit
+                </p>
+                <p className="text-sm" style={{ color: "#4A4560" }}>
+                  Conversation starters to keep the class flowing
+                </p>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex overflow-x-auto px-4 pt-4 gap-2" style={{ scrollbarWidth: "none" }}>
+                {TABS.map((tab) => (
+                  <button key={tab.key}
+                    onClick={() => { setIceTab(tab.key); setIceIndex(0); }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all"
+                    style={{
+                      background: iceTab === tab.key ? "#845EC2" : "var(--bg)",
+                      color: iceTab === tab.key ? "white" : "#4A4560",
+                      border: `1.5px solid ${iceTab === tab.key ? "#845EC2" : "rgba(132,94,194,.12)"}`,
+                      fontFamily: "'Nunito', sans-serif",
+                    }}>
+                    {tab.icon} {tab.label}
                   </button>
+                ))}
+              </div>
+
+              {/* Question */}
+              <div className="px-6 py-6">
+                <p className="leading-snug mb-6" style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "clamp(1.1rem, 3vw, 1.35rem)", fontWeight: 600, color: "#1E1B2E", minHeight: "3.5rem" }}>
+                  "{q}"
+                </p>
+
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  {/* Counter + dots */}
+                  <div className="flex items-center gap-3">
+                    <span style={{ fontSize: ".75rem", fontWeight: 700, color: "#8E8AA0" }}>
+                      {(iceIndex % questions.length) + 1} / {questions.length}
+                    </span>
+                    <div className="flex gap-1.5">
+                      {questions.map((_, i) => (
+                        <button key={i} onClick={() => setIceIndex(i)}
+                          style={{ width: 7, height: 7, borderRadius: "50%", border: "none", cursor: "pointer", background: i === iceIndex % questions.length ? "#845EC2" : "rgba(132,94,194,.2)", transition: "background .2s" }} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button onClick={handleCopy}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all"
+                      style={{ background: copied ? "rgba(6,214,160,.1)" : "var(--bg)", color: copied ? "#06D6A0" : "#4A4560", border: `1.5px solid ${copied ? "rgba(6,214,160,.3)" : "rgba(132,94,194,.12)"}`, fontFamily: "'Nunito', sans-serif" }}>
+                      {copied ? "✓ Copied!" : "📋 Copy"}
+                    </button>
+                    <button onClick={prev}
+                      className="px-3 py-2 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
+                      style={{ background: "var(--bg)", border: "1.5px solid rgba(132,94,194,.15)", color: "#845EC2", fontFamily: "'Nunito', sans-serif" }}>
+                      ←
+                    </button>
+                    <button onClick={next}
+                      className="px-4 py-2 rounded-full text-sm font-bold hover:opacity-90 transition-opacity text-white"
+                      style={{ background: "#845EC2", border: "none", fontFamily: "'Nunito', sans-serif" }}>
+                      Next →
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
