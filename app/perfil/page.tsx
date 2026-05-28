@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import Avatar from "@/components/Avatar";
 import { useProfile, facilitatorLabel } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 import { TOPIC_META, LEVEL_META } from "@/lib/mock-data";
@@ -39,7 +40,7 @@ export default function PerfilPage() {
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<{ name: string; city: string; bio: string; english_level: string; topics: string[] } | null>(null);
+  const [form, setForm] = useState<{ name: string; city: string; bio: string; english_level: string; topics: string[]; avatar: string } | null>(null);
 
   useEffect(() => {
     if (profileLoading || !profile) return;
@@ -78,7 +79,7 @@ export default function PerfilPage() {
 
   const startEdit = () => {
     if (!profile) return;
-    setForm({ name: p.name ?? "", city: p.city ?? "", bio: p.bio ?? "", english_level: p.english_level ?? "básico", topics: p.topics ?? [] });
+    setForm({ name: p.name ?? "", city: p.city ?? "", bio: p.bio ?? "", english_level: p.english_level ?? "básico", topics: p.topics ?? [], avatar: p.avatar ?? "" });
     setEditing(true);
   };
 
@@ -89,7 +90,7 @@ export default function PerfilPage() {
     await supabase.from("profiles").update({
       name: form.name, city: form.city, bio: form.bio,
       english_level: form.english_level, topics: form.topics,
-      avatar: form.name.charAt(0).toUpperCase(),
+      avatar: form.avatar || form.name.charAt(0).toUpperCase(),
     }).eq("id", profile.id);
     setSaving(false);
     setEditing(false);
@@ -119,10 +120,7 @@ export default function PerfilPage() {
         {/* ── Perfil header ── */}
         <div className="rounded-3xl p-6 sm:p-8" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.1)", boxShadow: "0 4px 24px rgba(132,94,194,.07)" }}>
           <div className="flex items-start gap-5 mb-5">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #FF6B6B, #FF9E4F)" }}>
-              {p?.avatar ?? "?"}
-            </div>
+            <Avatar avatar={p?.avatar ?? "?"} size={64} gradient="linear-gradient(135deg, #FF6B6B, #FF9E4F)" style={{ borderRadius: 16 }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -193,7 +191,7 @@ export default function PerfilPage() {
               )}
             </>
           ) : (
-            <EditForm form={form!} setForm={setForm} saving={saving} onSave={saveEdit} onCancel={() => setEditing(false)} toggleTopic={toggleTopic} />
+            <EditForm form={form!} setForm={setForm} saving={saving} onSave={saveEdit} onCancel={() => setEditing(false)} toggleTopic={toggleTopic} profileId={profile!.id} onAvatarChange={(url: string) => setForm((f) => f ? { ...f, avatar: url } : f)} />
           )}
         </div>
 
@@ -246,9 +244,7 @@ export default function PerfilPage() {
                               <Link key={pt.user_id} href={`/perfil/${pt.user_id}`}
                                 style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
                                 className="hover:opacity-80 transition-opacity">
-                                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #845EC2, #C8A4D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: ".8rem", fontWeight: 700, flexShrink: 0 }}>
-                                  {pt.profiles?.avatar ?? "?"}
-                                </div>
+                                <Avatar avatar={pt.profiles?.avatar ?? "?"} size={32} />
                                 <div style={{ flex: 1 }}>
                                   <p style={{ fontSize: ".85rem", fontWeight: 700, color: "#1E1B2E" }}>
                                     {pt.profiles?.name}{pt.profiles?.city ? ` · ${pt.profiles.city}` : ""}
@@ -360,11 +356,9 @@ export default function PerfilPage() {
                           .filter((p: any) => p && p.id !== profile!.id)
                           .slice(0, 3)
                           .map((p: any) => (
-                            <Link key={p.id} href={`/perfil/${p.id}`}
-                              title={p.name}
-                              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white hover:opacity-80 transition-opacity"
-                              style={{ background: "linear-gradient(135deg, #845EC2, #C8A4D4)", textDecoration: "none", flexShrink: 0 }}>
-                              {p.avatar}
+                            <Link key={p.id} href={`/perfil/${p.id}`} title={p.name} style={{ textDecoration: "none", flexShrink: 0 }}
+                              className="hover:opacity-80 transition-opacity">
+                              <Avatar avatar={p.avatar} size={28} />
                             </Link>
                           ))}
                       </div>
@@ -421,9 +415,34 @@ function EmptyState({ icon, text, link, linkText }: { icon: string; text: string
   );
 }
 
-function EditForm({ form, setForm, saving, onSave, onCancel, toggleTopic }: any) {
+function EditForm({ form, setForm, saving, onSave, onCancel, toggleTopic, profileId, onAvatarChange }: any) {
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profileId) return;
+    setUploadingPhoto(true);
+    const supabase = createClient();
+    await supabase.storage.from("avatars").upload(profileId, file, { upsert: true, contentType: file.type });
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(profileId);
+    onAvatarChange(`${publicUrl}?t=${Date.now()}`);
+    setUploadingPhoto(false);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Photo upload */}
+      <div>
+        <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 8 }}>Foto de perfil</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <Avatar avatar={form.avatar || form.name?.charAt(0)?.toUpperCase() || "?"} size={56} style={{ borderRadius: 14 }} />
+          <label style={{ padding: "8px 16px", borderRadius: 50, border: "1.5px solid rgba(132,94,194,.2)", background: "rgba(132,94,194,.05)", color: "#845EC2", fontFamily: "'Nunito', sans-serif", fontSize: ".82rem", fontWeight: 700, cursor: uploadingPhoto ? "default" : "pointer", opacity: uploadingPhoto ? 0.6 : 1 }}>
+            {uploadingPhoto ? "Subiendo…" : "Cambiar foto"}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoChange} disabled={uploadingPhoto} />
+          </label>
+        </div>
+      </div>
+
       {[{ label: "Nombre", key: "name", placeholder: "Tu nombre" }, { label: "Ciudad", key: "city", placeholder: "Buenos Aires" }].map(({ label, key, placeholder }) => (
         <div key={key}>
           <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 5 }}>{label}</label>

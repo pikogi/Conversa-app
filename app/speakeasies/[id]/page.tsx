@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import Avatar from "@/components/Avatar";
 import { TOPIC_META, LEVEL_META, ICE_BREAKERS } from "@/lib/mock-data";
 import { useProfile, facilitatorLabel } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
@@ -214,10 +215,7 @@ export default function SpeakeasyDetailPage() {
             <Link href={`/perfil/${speakeasy.facilitator_id}`}
               className="flex items-center gap-3 p-4 rounded-2xl mb-6 hover:opacity-90 transition-opacity"
               style={{ background: "rgba(132,94,194,.06)", border: "1px solid rgba(132,94,194,.1)", textDecoration: "none" }}>
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold text-white flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #845EC2, #C8A4D4)" }}>
-                {facilitator.avatar}
-              </div>
+              <Avatar avatar={facilitator.avatar} size={44} gradient="linear-gradient(135deg, #845EC2, #C8A4D4)" />
               <div className="flex-1">
                 <p className="text-xs font-bold" style={{ color: "#8E8AA0" }}>{facilitatorLabel((facilitator as any)?.gender)} · ver perfil →</p>
                 <p className="text-sm font-bold" style={{ color: "#1E1B2E" }}>
@@ -238,10 +236,7 @@ export default function SpeakeasyDetailPage() {
                 <Link key={pt.user_id} href={`/perfil/${pt.user_id}`}
                   className="flex items-center gap-2 px-3 py-2 rounded-2xl hover:opacity-80 transition-opacity"
                   style={{ background: "var(--bg)", border: "1px solid rgba(132,94,194,.1)", textDecoration: "none" }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, #FF6B6B, #FF9E4F)" }}>
-                    {pt.profiles.avatar}
-                  </div>
+                  <Avatar avatar={pt.profiles.avatar} size={32} gradient="linear-gradient(135deg, #FF6B6B, #FF9E4F)" />
                   <div>
                     <p className="text-xs font-bold" style={{ color: "#1E1B2E" }}>{pt.profiles.name}</p>
                     {pt.profiles.city && <p className="text-xs" style={{ color: "#8E8AA0" }}>{pt.profiles.city}</p>}

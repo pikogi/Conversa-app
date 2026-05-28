@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import Avatar from "@/components/Avatar";
 import { TOPIC_META, LEVEL_META } from "@/lib/mock-data";
 import { facilitatorLabel } from "@/lib/hooks/useProfile";
 import { useProfile } from "@/lib/hooks/useProfile";
@@ -95,10 +96,7 @@ export default function PublicProfilePage() {
         {/* Profile card */}
         <div className="rounded-3xl p-6 sm:p-8" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.1)", boxShadow: "0 4px 24px rgba(132,94,194,.07)" }}>
           <div className="flex items-start gap-5 mb-6">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white flex-shrink-0"
-              style={{ background: isFacilitator ? "linear-gradient(135deg, #845EC2, #C8A4D4)" : "linear-gradient(135deg, #FF6B6B, #FF9E4F)" }}>
-              {person.avatar}
-            </div>
+            <Avatar avatar={person.avatar} size={64} gradient={isFacilitator ? "linear-gradient(135deg, #845EC2, #C8A4D4)" : "linear-gradient(135deg, #FF6B6B, #FF9E4F)"} style={{ borderRadius: 16 }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -180,10 +178,7 @@ export default function PublicProfilePage() {
                 <div key={r.id} className="rounded-2xl p-4" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.1)" }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                        style={{ background: "linear-gradient(135deg, #FF6B6B, #FF9E4F)" }}>
-                        {(r.profiles as any)?.avatar ?? "?"}
-                      </div>
+                      <Avatar avatar={(r.profiles as any)?.avatar ?? "?"} size={28} gradient="linear-gradient(135deg, #FF6B6B, #FF9E4F)" />
                       <span style={{ fontSize: ".82rem", fontWeight: 700, color: "#1E1B2E" }}>{(r.profiles as any)?.name ?? "Anónimo"}</span>
                     </div>
                     <span style={{ color: "#FF9E4F", fontSize: ".95rem", letterSpacing: 1 }}>

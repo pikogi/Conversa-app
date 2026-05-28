@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { DbSpeakeasy } from "@/lib/types";
 import { TOPIC_META, LEVEL_META } from "@/lib/mock-data";
+import Avatar from "@/components/Avatar";
 
 interface Props {
   speakeasy: DbSpeakeasy;
@@ -74,9 +75,7 @@ export default function SpeakeasyCard({ speakeasy, joined = false, favorited = f
         {/* Participant avatars */}
         <div className="hidden sm:flex items-center" style={{ flexShrink: 0 }}>
           {speakeasy.participants?.slice(0, 3).map((pt, i) => (
-            <div key={pt.user_id ?? i} style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg, #845EC2, #C8A4D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: ".7rem", fontWeight: 700, border: "2px solid white", marginLeft: i === 0 ? 0 : -6 }}>
-              {pt.profiles?.avatar ?? "?"}
-            </div>
+            <Avatar key={pt.user_id ?? i} avatar={pt.profiles?.avatar ?? "?"} size={26} gradient="linear-gradient(135deg, #845EC2, #C8A4D4)" style={{ border: "2px solid white", marginLeft: i === 0 ? 0 : -6 }} />
           ))}
         </div>
 
@@ -119,9 +118,7 @@ export default function SpeakeasyCard({ speakeasy, joined = false, favorited = f
         {/* Participants */}
         <div className="flex items-center gap-1 mb-4">
           {speakeasy.participants?.slice(0, 3).map((pt, i) => (
-            <div key={pt.user_id ?? i} style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg, #845EC2, #C8A4D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: ".68rem", fontWeight: 700, border: "2px solid white", marginLeft: i === 0 ? 0 : -6 }}>
-              {pt.profiles?.avatar ?? "?"}
-            </div>
+            <Avatar key={pt.user_id ?? i} avatar={pt.profiles?.avatar ?? "?"} size={26} gradient="linear-gradient(135deg, #845EC2, #C8A4D4)" style={{ border: "2px solid white", marginLeft: i === 0 ? 0 : -6 }} />
           ))}
           {participantCount === 0 && <span className="text-xs" style={{ color: "#C0BCCC" }}>Sin participantes aún</span>}
           <span className="text-xs font-bold ml-2" style={{ color: isFull ? "#FF6B6B" : "#06D6A0" }}>

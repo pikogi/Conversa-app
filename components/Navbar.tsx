@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useProfile } from "@/lib/hooks/useProfile";
+import Avatar from "@/components/Avatar";
 
 export default function Navbar() {
   const path = usePathname();
@@ -61,15 +62,7 @@ export default function Navbar() {
                   {name.split(" ")[0]}
                 </span>
               )}
-              <div style={{
-                width: 34, height: 34, borderRadius: "50%",
-                background: "linear-gradient(135deg, #FF6B6B, #FF9E4F)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "white", fontSize: ".85rem", fontWeight: 700,
-                boxShadow: "0 2px 8px rgba(255,107,107,.35)",
-              }}>
-                {avatar}
-              </div>
+              <Avatar avatar={avatar} size={34} style={{ boxShadow: "0 2px 8px rgba(255,107,107,.35)" }} />
             </div>
           </Link>
           </div>
