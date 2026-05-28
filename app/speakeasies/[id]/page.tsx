@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { TOPIC_META, LEVEL_META } from "@/lib/mock-data";
+import { TOPIC_META, LEVEL_META, ICE_BREAKERS } from "@/lib/mock-data";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 
@@ -30,6 +30,8 @@ type Speakeasy = {
 
 export default function SpeakeasyDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const wantsRepeat = searchParams.get("repito") === "1";
   const { profile } = useProfile();
 
   const [speakeasy, setSpeakeasy] = useState<Speakeasy | null>(null);
@@ -37,6 +39,7 @@ export default function SpeakeasyDetailPage() {
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [iceIndex, setIceIndex] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
@@ -143,6 +146,17 @@ export default function SpeakeasyDetailPage() {
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+        {wantsRepeat && (
+          <div className="rounded-2xl p-4 mb-6 flex items-center gap-3"
+            style={{ background: "rgba(132,94,194,.08)", border: "1.5px solid rgba(132,94,194,.2)" }}>
+            <span style={{ fontSize: "1.4rem" }}>🔁</span>
+            <div>
+              <p className="text-sm font-bold" style={{ color: "#845EC2" }}>¡Gracias por confirmar!</p>
+              <p className="text-xs" style={{ color: "#4A4560" }}>Le avisamos al grupo que querés repetir.</p>
+            </div>
+          </div>
+        )}
+
         <Link href="/speakeasies" className="inline-flex items-center gap-1 text-sm font-bold mb-6 hover:opacity-70 transition-opacity"
           style={{ color: "#845EC2" }}>
           ← Volver a Speakeasies
@@ -282,6 +296,41 @@ export default function SpeakeasyDetailPage() {
             </button>
           )}
         </div>
+        {/* Ice-breakers — solo facilitador */}
+        {isFacilitator && (() => {
+          const questions = ICE_BREAKERS[speakeasy.topic] ?? ICE_BREAKERS["viajes"];
+          return (
+            <div className="rounded-3xl p-6 sm:p-8" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.12)", boxShadow: "0 4px 32px rgba(132,94,194,.1)" }}>
+              <p className="text-xs font-bold mb-4" style={{ color: "#8E8AA0", textTransform: "uppercase", letterSpacing: 1 }}>
+                💬 Preguntas para arrancar la charla
+              </p>
+              <p className="text-base font-bold leading-snug mb-5" style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.15rem", color: "#1E1B2E" }}>
+                "{questions[iceIndex]}"
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1.5">
+                  {questions.map((_, i) => (
+                    <button key={i} onClick={() => setIceIndex(i)}
+                      style={{ width: 8, height: 8, borderRadius: "50%", border: "none", cursor: "pointer", background: i === iceIndex ? "#845EC2" : "rgba(132,94,194,.2)", transition: "background .2s" }} />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setIceIndex((i) => (i - 1 + questions.length) % questions.length)}
+                    className="px-4 py-2 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
+                    style={{ background: "var(--bg)", border: "1.5px solid rgba(132,94,194,.15)", color: "#845EC2", fontFamily: "'Nunito', sans-serif" }}>
+                    ←
+                  </button>
+                  <button onClick={() => setIceIndex((i) => (i + 1) % questions.length)}
+                    className="px-4 py-2 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
+                    style={{ background: "#845EC2", color: "white", border: "none", fontFamily: "'Nunito', sans-serif" }}>
+                    Siguiente →
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
       </main>
     </div>
   );

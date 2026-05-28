@@ -100,11 +100,18 @@ export default function SpeakeasiesPage() {
               Speakeasies disponibles
             </h1>
             {isFacilitator && (
-              <Link href="/speakeasies/crear"
-                className="sm:hidden inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity whitespace-nowrap flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #845EC2, #6d4aab)", fontFamily: "'Nunito', sans-serif", boxShadow: "0 4px 16px rgba(132,94,194,.3)", marginTop: 4 }}>
-                + Crear
-              </Link>
+              <div className="sm:hidden flex gap-2">
+                <Link href="/speakeasies/crear?express=1"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-full text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap flex-shrink-0"
+                  style={{ background: "rgba(255,158,79,.12)", color: "#FF9E4F", fontFamily: "'Nunito', sans-serif", border: "1.5px solid rgba(255,158,79,.3)", marginTop: 4 }}>
+                  ⚡ Exprés
+                </Link>
+                <Link href="/speakeasies/crear"
+                  className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity whitespace-nowrap flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg, #845EC2, #6d4aab)", fontFamily: "'Nunito', sans-serif", boxShadow: "0 4px 16px rgba(132,94,194,.3)", marginTop: 4 }}>
+                  + Crear
+                </Link>
+              </div>
             )}
           </div>
           <div className="flex items-center justify-between gap-4">
@@ -112,11 +119,18 @@ export default function SpeakeasiesPage() {
               Grupos de 4 personas · 60 min · 100% conversacional
             </p>
             {isFacilitator && (
-              <Link href="/speakeasies/crear"
-                className="hidden sm:inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity whitespace-nowrap"
-                style={{ background: "linear-gradient(135deg, #845EC2, #6d4aab)", fontFamily: "'Nunito', sans-serif", boxShadow: "0 4px 16px rgba(132,94,194,.3)" }}>
-                + Crear Speakeasy
-              </Link>
+              <div className="hidden sm:flex gap-2">
+                <Link href="/speakeasies/crear?express=1"
+                  className="inline-flex items-center gap-2 px-4 py-3 rounded-full text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+                  style={{ background: "rgba(255,158,79,.12)", color: "#FF9E4F", fontFamily: "'Nunito', sans-serif", border: "1.5px solid rgba(255,158,79,.3)" }}>
+                  ⚡ Exprés
+                </Link>
+                <Link href="/speakeasies/crear"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity whitespace-nowrap"
+                  style={{ background: "linear-gradient(135deg, #845EC2, #6d4aab)", fontFamily: "'Nunito', sans-serif", boxShadow: "0 4px 16px rgba(132,94,194,.3)" }}>
+                  + Crear Speakeasy
+                </Link>
+              </div>
             )}
           </div>
         </div>

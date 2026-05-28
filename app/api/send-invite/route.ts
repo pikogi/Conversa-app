@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export async function POST(req: NextRequest) {
-  const { to, name, title, date, time, meetingUrl, level, topic, type = "join" } = await req.json();
+  const { to, name, title, date, time, meetingUrl, level, topic, type = "join", repeatToken } = await req.json();
 
-  if (!to || !title || !meetingUrl) {
+  if (!to || !title) {
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
@@ -18,23 +18,36 @@ export async function POST(req: NextRequest) {
   });
 
   const isCreated = type === "created";
+  const isFollowup = type === "followup";
 
   const subject = isCreated
     ? `¡Tu Speakeasy "${title}" ya está publicado! 🚀`
+    : isFollowup
+    ? `¿Cómo fue "${title}"? ¿Repetimos? 🔁`
     : `¡Te anotaste a "${title}"! 🎉`;
 
   const headerSubtitle = isCreated
     ? "¡Tu grupo ya está en línea!"
+    : isFollowup
+    ? "¿Cómo estuvo la sesión?"
     : "¡Ya sos parte del grupo!";
 
   const bodyIntro = isCreated
     ? `Hola${name ? ` <strong>${name}</strong>` : ""}! Tu Speakeasy quedó publicado y los participantes ya pueden anotarse.`
+    : isFollowup
+    ? `Hola${name ? ` <strong>${name}</strong>` : ""}! Esperamos que haya sido una buena sesión. ¿Te gustaría repetir con este grupo?`
     : `Hola${name ? ` <strong>${name}</strong>` : ""}! Te confirmamos que quedaste anotado/a en:`;
 
-  const buttonText = isCreated ? "Ver mi Speakeasy →" : "Entrar al Speakeasy →";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://conversa-app-blush.vercel.app";
+  const buttonText = isCreated ? "Ver mi Speakeasy →" : isFollowup ? "¡Sí, quiero repetir! 🔁" : "Entrar al Speakeasy →";
+  const buttonHref = isFollowup && repeatToken
+    ? `${appUrl}/api/quedamos?token=${repeatToken}`
+    : meetingUrl;
 
   const footerNote = isCreated
     ? "Guardá este mail — tiene el link de tu clase. Te avisamos cuando alguien se anote."
+    : isFollowup
+    ? "Si no podés repetir, no hay problema — el cupo se libera para otra persona."
     : "Guardá este mail — tiene tu link de acceso. Si no podés asistir, avisanos desde la app para liberar el lugar.";
 
   try {
@@ -74,9 +87,9 @@ export async function POST(req: NextRequest) {
         </div>
       </div>
 
-      <!-- Meet link -->
-      <p style="margin:0 0 12px;font-size:.9rem;color:#4A4560;">Tu link para entrar a la clase:</p>
-      <a href="${meetingUrl}" style="display:block;background:linear-gradient(135deg,#845EC2,#6d4aab);color:white;text-decoration:none;text-align:center;padding:14px 24px;border-radius:50px;font-weight:700;font-size:.95rem;margin-bottom:24px;">
+      <!-- CTA -->
+      ${!isFollowup ? `<p style="margin:0 0 12px;font-size:.9rem;color:#4A4560;">Tu link para entrar a la clase:</p>` : ""}
+      <a href="${buttonHref}" style="display:block;background:linear-gradient(135deg,#845EC2,#6d4aab);color:white;text-decoration:none;text-align:center;padding:14px 24px;border-radius:50px;font-weight:700;font-size:.95rem;margin-bottom:24px;">
         ${buttonText}
       </a>
 

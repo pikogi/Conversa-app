@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { TOPIC_META } from "@/lib/mock-data";
@@ -12,19 +12,30 @@ import { createClient } from "@/lib/supabase/client";
 const TOPICS: Topic[] = ["viajes", "musica", "series", "trabajo", "amor", "mundo"];
 const LEVELS = ["básico", "intermedio", "avanzado"] as const;
 
+function getExpressDateTime() {
+  const now = new Date(Date.now() + 30 * 60 * 1000);
+  const date = now.toISOString().split("T")[0];
+  const time = now.toTimeString().slice(0, 5);
+  return { date, time };
+}
+
 export default function CrearSpeakeasyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isExpress = searchParams.get("express") === "1";
   const { profile, loading: profileLoading, isFacilitator } = useProfile();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdId, setCreatedId] = useState<string | null>(null);
 
+  const expressDefaults = isExpress ? getExpressDateTime() : null;
+
   const [form, setForm] = useState({
     title: "",
     topic: "" as Topic | "",
     description: "",
-    date: "",
-    time: "",
+    date: expressDefaults?.date ?? "",
+    time: expressDefaults?.time ?? "",
     meetingUrl: "",
     level: "intermedio" as "básico" | "intermedio" | "avanzado",
   });
@@ -141,10 +152,12 @@ export default function CrearSpeakeasyPage() {
         </Link>
 
         <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Fredoka', sans-serif", color: "#1E1B2E" }}>
-          Crear un Speakeasy
+          {isExpress ? "⚡ Speakeasy Exprés" : "Crear un Speakeasy"}
         </h1>
         <p className="text-sm mb-8" style={{ color: "#4A4560" }}>
-          Vas a ser el/la facilitador/a. Tu trabajo es abrir la conversación y que fluya.
+          {isExpress
+            ? "La fecha y hora ya están cargadas para dentro de 30 minutos. Completá el resto y publicá."
+            : "Vas a ser el/la facilitador/a. Tu trabajo es abrir la conversación y que fluya."}
         </p>
 
         <form onSubmit={handleSubmit}>

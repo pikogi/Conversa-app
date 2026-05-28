@@ -110,6 +110,65 @@ export const TOPIC_META: Record<string, { emoji: string; label: string; color: s
   deporte:     { emoji: "⚽", label: "Deporte",   color: "#06D6A0", bg: "#E8F5E9" },
 };
 
+export const ICE_BREAKERS: Record<string, string[]> = {
+  viajes: [
+    "¿Cuál fue el viaje que más te cambió y por qué?",
+    "¿Preferís viajar solo/a o acompañado/a?",
+    "¿Cuál es el destino que tenés pendiente y qué esperás encontrar ahí?",
+    "¿Qué es lo primero que hacés cuando llegás a una ciudad nueva?",
+    "¿Alguna vez te pasó algo inesperado viajando que terminó siendo lo mejor del viaje?",
+  ],
+  musica: [
+    "¿Cuál fue el primer concierto al que fuiste?",
+    "¿Qué canción escuchás cuando necesitás energía?",
+    "¿Hay una canción que te recuerde a un momento muy específico de tu vida?",
+    "¿Escuchás música mientras trabajás? ¿Qué tipo?",
+    "¿Aprendiste o intentaste aprender algún instrumento?",
+  ],
+  series: [
+    "¿Cuál fue la última serie que te enganchó y no podías parar?",
+    "¿Preferís series cortas o sagas largas?",
+    "¿Hay alguna serie que hayas visto más de una vez?",
+    "¿Qué serie le recomendarías a alguien que no sabe qué ver hoy?",
+    "¿Tenés algún personaje de serie o película con el que te identificás?",
+  ],
+  trabajo: [
+    "¿A qué te dedicás y cuál es la parte que más te gusta de tu trabajo?",
+    "¿Cuál fue el trabajo más raro o interesante que tuviste?",
+    "¿Preferís trabajar desde casa o en oficina?",
+    "¿Tenés algún sueño profesional que todavía no cumpliste?",
+    "¿Qué habilidad nueva te gustaría aprender para tu carrera?",
+  ],
+  amor: [
+    "¿Cómo conociste a tu pareja o cuál fue tu cita más memorable?",
+    "¿Creés en el amor a primera vista?",
+    "¿Cuál es la cosa más romántica que hiciste o que hicieron por vos?",
+    "¿Qué cualidad valorás más en una pareja?",
+    "¿Cuál sería tu idea de una cita perfecta?",
+  ],
+  mundo: [
+    "¿Cuál es el tema mundial que más te preocupa hoy?",
+    "¿Si pudieras cambiar una sola cosa del mundo, qué sería?",
+    "¿Hay algún país cuya cultura te fascina?",
+    "¿Qué noticia reciente te sorprendió?",
+    "¿Creés que el mundo está mejor o peor que hace 20 años?",
+  ],
+  gastronomia: [
+    "¿Cuál es el plato que más te gusta cocinar?",
+    "¿Tenés alguna receta familiar que sea especial?",
+    "¿Cuál es la comida de otro país que más te gustó probar?",
+    "¿Sos más de cocina casera o de restaurantes?",
+    "¿Alguna vez intentaste cocinar algo y salió un desastre?",
+  ],
+  deporte: [
+    "¿Qué deporte practicás o seguís?",
+    "¿Cuál fue el momento deportivo más emocionante que viviste?",
+    "¿Preferís deportes de equipo o individuales?",
+    "¿Hay algún deporte que nunca practicaste pero te gustaría intentar?",
+    "¿Tenés algún deportista que admires?",
+  ],
+};
+
 export const LEVEL_META = {
   básico:     { label: "Básico",      color: "#06D6A0", bg: "rgba(6,214,160,.12)" },
   intermedio: { label: "Intermedio",  color: "#FF9E4F", bg: "rgba(255,158,79,.12)" },

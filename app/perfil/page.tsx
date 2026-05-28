@@ -281,41 +281,84 @@ export default function PerfilPage() {
           </section>
         )}
 
-        {/* ── Grupos en los que me anoté ── */}
+        {/* ── Próximas sesiones ── */}
         <section>
           <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.3rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 16 }}>
-            Grupos en los que me anoté
+            Próximas sesiones
           </h2>
-
-          {dataLoading ? <SectionSkeleton /> : joined.length === 0 ? (
-            <EmptyState icon="🔍" text="Todavía no te anotaste a ningún grupo." link="/speakeasies" linkText="Ver Speakeasies disponibles →" />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {joined.map((s) => {
-                const topic = TOPIC_META[s.topic] ?? TOPIC_META["viajes"];
-                const level = LEVEL_META[s.level as keyof typeof LEVEL_META] ?? LEVEL_META["intermedio"];
-                const date = new Date(`${s.date}T${s.time}`);
-                return (
-                  <Link key={s.id} href={`/speakeasies/${s.id}`}
-                    className="rounded-3xl p-5 flex gap-4 items-start hover:opacity-90 transition-opacity"
-                    style={{ background: "white", border: "1.5px solid rgba(132,94,194,.12)", textDecoration: "none" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: topic.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", flexShrink: 0 }}>
-                      {topic.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1rem", fontWeight: 700, color: "#1E1B2E" }}>{s.title}</p>
-                      <p style={{ color: "#8E8AA0", fontSize: ".76rem", marginTop: 2 }}>
-                        📅 {date.toLocaleDateString("es-AR", { day: "numeric", month: "short" })} · {date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-                      </p>
-                      <span style={{ display: "inline-block", marginTop: 6, padding: "3px 10px", borderRadius: 50, background: level.bg, color: level.color, fontSize: ".72rem", fontWeight: 700 }}>{level.label}</span>
-                    </div>
-                    <span style={{ padding: "4px 10px", borderRadius: 50, background: "rgba(6,214,160,.1)", color: "#06D6A0", fontSize: ".72rem", fontWeight: 800, flexShrink: 0, alignSelf: "flex-start" }}>✓ Anotado</span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+          {dataLoading ? <SectionSkeleton /> : (() => {
+            const now = new Date();
+            const upcoming = joined.filter((s) => new Date(`${s.date}T${s.time}`) >= now);
+            return upcoming.length === 0 ? (
+              <EmptyState icon="🔍" text="Todavía no te anotaste a ningún grupo." link="/speakeasies" linkText="Ver Speakeasies disponibles →" />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {upcoming.map((s) => {
+                  const topic = TOPIC_META[s.topic] ?? TOPIC_META["viajes"];
+                  const level = LEVEL_META[s.level as keyof typeof LEVEL_META] ?? LEVEL_META["intermedio"];
+                  const date = new Date(`${s.date}T${s.time}`);
+                  return (
+                    <Link key={s.id} href={`/speakeasies/${s.id}`}
+                      className="rounded-3xl p-5 flex gap-4 items-start hover:opacity-90 transition-opacity"
+                      style={{ background: "white", border: "1.5px solid rgba(132,94,194,.12)", textDecoration: "none" }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 14, background: topic.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", flexShrink: 0 }}>
+                        {topic.emoji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1rem", fontWeight: 700, color: "#1E1B2E" }}>{s.title}</p>
+                        <p style={{ color: "#8E8AA0", fontSize: ".76rem", marginTop: 2 }}>
+                          📅 {date.toLocaleDateString("es-AR", { day: "numeric", month: "short" })} · {date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        <span style={{ display: "inline-block", marginTop: 6, padding: "3px 10px", borderRadius: 50, background: level.bg, color: level.color, fontSize: ".72rem", fontWeight: 700 }}>{level.label}</span>
+                      </div>
+                      <span style={{ padding: "4px 10px", borderRadius: 50, background: "rgba(6,214,160,.1)", color: "#06D6A0", fontSize: ".72rem", fontWeight: 800, flexShrink: 0, alignSelf: "flex-start" }}>✓ Anotado</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </section>
+
+        {/* ── Pasaporte ── */}
+        {!dataLoading && (() => {
+          const now = new Date();
+          const past = joined.filter((s) => new Date(`${s.date}T${s.time}`) < now);
+          if (past.length === 0) return null;
+          return (
+            <section>
+              <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.3rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 4 }}>
+                Mi Pasaporte
+              </h2>
+              <p style={{ color: "#8E8AA0", fontSize: ".82rem", marginBottom: 16 }}>
+                {past.length} conversación{past.length !== 1 ? "es" : ""} completada{past.length !== 1 ? "s" : ""}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {past.map((s) => {
+                  const topic = TOPIC_META[s.topic] ?? TOPIC_META["viajes"];
+                  const date = new Date(`${s.date}T${s.time}`);
+                  return (
+                    <Link key={s.id} href={`/speakeasies/${s.id}`}
+                      className="rounded-2xl p-4 hover:opacity-80 transition-opacity"
+                      style={{ background: "white", border: `2px solid ${topic.color}25`, textDecoration: "none", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", top: -10, right: -10, fontSize: "3.5rem", opacity: .08, userSelect: "none" }}>
+                        {topic.emoji}
+                      </div>
+                      <p style={{ fontSize: "1.6rem", marginBottom: 6 }}>{topic.emoji}</p>
+                      <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: ".9rem", fontWeight: 700, color: "#1E1B2E", lineHeight: 1.2, marginBottom: 6 }}>{s.title}</p>
+                      <p style={{ fontSize: ".72rem", color: "#8E8AA0", fontWeight: 600 }}>
+                        {date.toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                      <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 50, background: topic.bg }}>
+                        <span style={{ fontSize: ".68rem", fontWeight: 800, color: topic.color }}>✓ Completado</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Logout */}
         <button onClick={handleLogout}
