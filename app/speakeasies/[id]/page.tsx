@@ -109,6 +109,14 @@ export default function SpeakeasyDetailPage() {
       .single();
     if (data) setSpeakeasy(data as unknown as Speakeasy);
     setCalendarPrompt(true);
+
+    // Notificar al facilitador
+    fetch("/api/notify-facilitator", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ speakeasy_id: speakeasy.id, participant_name: profile.name }),
+    });
+
     setJoining(false);
   };
 
