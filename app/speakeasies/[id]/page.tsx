@@ -33,6 +33,7 @@ export default function SpeakeasyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const wantsRepeat = searchParams.get("repito") === "1";
+  const fromCalendar = searchParams.get("calendar") === "1";
   const { profile } = useProfile();
 
   const [speakeasy, setSpeakeasy] = useState<Speakeasy | null>(null);
@@ -47,6 +48,7 @@ export default function SpeakeasyDetailPage() {
   const [reviewDraft, setReviewDraft] = useState({ rating: 0, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewSaved, setReviewSaved] = useState(false);
+  const [calendarPrompt, setCalendarPrompt] = useState(fromCalendar);
 
   useEffect(() => {
     const supabase = createClient();
@@ -106,6 +108,7 @@ export default function SpeakeasyDetailPage() {
       .eq("id", id)
       .single();
     if (data) setSpeakeasy(data as unknown as Speakeasy);
+    setCalendarPrompt(true);
     setJoining(false);
   };
 
@@ -155,6 +158,35 @@ export default function SpeakeasyDetailPage() {
   const dateStr = date.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
   const timeStr = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
+  const calStart = new Date(`${speakeasy.date}T${speakeasy.time}-03:00`);
+  const calEnd = new Date(calStart.getTime() + 60 * 60 * 1000);
+  const fmtCal = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const googleCalUrl = (() => {
+    const u = new URL("https://calendar.google.com/calendar/render");
+    u.searchParams.set("action", "TEMPLATE");
+    u.searchParams.set("text", speakeasy.title);
+    u.searchParams.set("dates", `${fmtCal(calStart)}/${fmtCal(calEnd)}`);
+    u.searchParams.set("details", `Speakeasy de inglés en Conversa\n\n${speakeasy.description ?? ""}\n\nLink: ${speakeasy.meeting_url ?? ""}`);
+    u.searchParams.set("location", speakeasy.meeting_url ?? "");
+    return u.toString();
+  })();
+  const downloadICS = () => {
+    const ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Conversa//ES",
+      "BEGIN:VEVENT",
+      `SUMMARY:${speakeasy.title}`,
+      `DTSTART:${fmtCal(calStart)}`,
+      `DTEND:${fmtCal(calEnd)}`,
+      `DESCRIPTION:Speakeasy de inglés en Conversa\\n${speakeasy.description ?? ""}\\nLink: ${speakeasy.meeting_url ?? ""}`,
+      `LOCATION:${speakeasy.meeting_url ?? ""}`,
+      "END:VEVENT", "END:VCALENDAR",
+    ].join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+    a.download = `${speakeasy.title.replace(/\s+/g, "-")}.ics`;
+    a.click();
+  };
+
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       <Navbar />
@@ -167,6 +199,21 @@ export default function SpeakeasyDetailPage() {
             <div>
               <p className="text-sm font-bold" style={{ color: "#845EC2" }}>¡Gracias por confirmar!</p>
               <p className="text-xs" style={{ color: "#4A4560" }}>Le avisamos al grupo que querés repetir.</p>
+            </div>
+          </div>
+        )}
+
+        {calendarPrompt && (
+          <div className="rounded-2xl p-4 mb-6" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.2)", boxShadow: "0 4px 20px rgba(132,94,194,.1)" }}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "#1E1B2E" }}>📅 ¿Lo agregás a tu calendario?</p>
+                <p className="text-xs mt-0.5" style={{ color: "#8E8AA0" }}>Para no olvidarte de la sesión</p>
+              </div>
+              <button onClick={() => setCalendarPrompt(false)} style={{ color: "#C0BCCC", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem", lineHeight: 1, flexShrink: 0 }}>✕</button>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <CalendarButtons googleUrl={googleCalUrl} onICS={downloadICS} />
             </div>
           </div>
         )}
@@ -259,16 +306,19 @@ export default function SpeakeasyDetailPage() {
           {/* CTA */}
           {isFacilitator ? (
             <div className="rounded-2xl p-5 text-center" style={{ background: "rgba(132,94,194,.06)", border: "1.5px solid rgba(132,94,194,.15)" }}>
-              <p className="text-base font-bold mb-1" style={{ fontFamily: "'Fredoka', sans-serif", color: "#845EC2" }}>
+              <p className="text-base font-bold mb-3" style={{ fontFamily: "'Fredoka', sans-serif", color: "#845EC2" }}>
                 Sos {(profile as any)?.gender === "femenino" ? "la" : (profile as any)?.gender === "masculino" ? "el" : "el/la"} {facilitatorLabel((profile as any)?.gender).toLowerCase()} de este grupo
               </p>
-              {speakeasy.meeting_url && (
-                <a href={speakeasy.meeting_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white mt-3 hover:opacity-90 transition-opacity"
-                  style={{ background: "#845EC2" }}>
-                  🎥 Abrir Google Meet
-                </a>
-              )}
+              <div className="flex gap-2 justify-center flex-wrap">
+                {speakeasy.meeting_url && (
+                  <a href={speakeasy.meeting_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                    style={{ background: "#845EC2" }}>
+                    🎥 Abrir Google Meet
+                  </a>
+                )}
+                <CalendarButtons googleUrl={googleCalUrl} onICS={downloadICS} />
+              </div>
             </div>
           ) : isJoined ? (
             <div className="rounded-2xl p-5" style={{ background: "rgba(6,214,160,.08)", border: "1.5px solid rgba(6,214,160,.2)" }}>
@@ -286,6 +336,7 @@ export default function SpeakeasyDetailPage() {
                     🎥 Abrir Google Meet
                   </a>
                 )}
+                <CalendarButtons googleUrl={googleCalUrl} onICS={downloadICS} />
                 <button onClick={handleLeave} disabled={leaving}
                   className="px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
                   style={{ background: "white", border: "1.5px solid rgba(255,107,107,.3)", color: "#FF6B6B", fontFamily: "'Nunito', sans-serif" }}>
@@ -464,5 +515,28 @@ export default function SpeakeasyDetailPage() {
 
       </main>
     </div>
+  );
+}
+
+function CalendarButtons({ googleUrl, onICS }: { googleUrl: string; onICS: () => void }) {
+  return (
+    <>
+      <a href={googleUrl} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
+        style={{ background: "white", border: "1.5px solid rgba(132,94,194,.2)", color: "#845EC2", textDecoration: "none", fontFamily: "'Nunito', sans-serif" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Google Calendar
+      </a>
+      <button onClick={onICS}
+        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
+        style={{ background: "white", border: "1.5px solid rgba(132,94,194,.15)", color: "#8E8AA0", fontFamily: "'Nunito', sans-serif", cursor: "pointer" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        iCal / Outlook
+      </button>
+    </>
   );
 }

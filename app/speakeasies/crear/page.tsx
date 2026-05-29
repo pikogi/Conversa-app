@@ -125,7 +125,7 @@ export default function CrearSpeakeasyPage() {
             Tu grupo <strong>"{form.title}"</strong> ya está publicado. Te avisamos cuando alguien se anote.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
-            <button onClick={() => router.push(`/speakeasies/${createdId}`)}
+            <button onClick={() => router.push(`/speakeasies/${createdId}?calendar=1`)}
               className="px-6 py-3 rounded-full text-sm font-bold text-white"
               style={{ background: "#845EC2", fontFamily: "'Nunito', sans-serif" }}>
               Ver el grupo
