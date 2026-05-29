@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -20,6 +20,10 @@ function getExpressDateTime() {
 }
 
 export default function CrearSpeakeasyPage() {
+  return <Suspense><CrearSpeakeasyInner /></Suspense>;
+}
+
+function CrearSpeakeasyInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isExpress = searchParams.get("express") === "1";
