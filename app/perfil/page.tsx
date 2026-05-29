@@ -38,16 +38,24 @@ export default function PerfilPage() {
   const [joined, setJoined] = useState<Speakeasy[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<{ name: string; city: string; bio: string; english_level: string; topics: string[]; avatar: string } | null>(null);
+  const [form, setForm] = useState<{ name: string; city: string; bio: string; english_level: string; topics: string[]; avatar: string; age: string } | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [changingPass, setChangingPass] = useState(false);
+  const [passForm, setPassForm] = useState({ newPass: "", confirmPass: "" });
+  const [passMsg, setPassMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [savingPass, setSavingPass] = useState(false);
 
   useEffect(() => {
     if (profileLoading || !profile) return;
 
     const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) setUserEmail(user.email);
+    });
 
     async function fetchData() {
       // Grupos que facilita
@@ -94,7 +102,7 @@ export default function PerfilPage() {
 
   const startEdit = () => {
     if (!profile) return;
-    setForm({ name: p.name ?? "", city: p.city ?? "", bio: p.bio ?? "", english_level: p.english_level ?? "básico", topics: p.topics ?? [], avatar: avatarUrl ?? p.avatar ?? "" });
+    setForm({ name: p.name ?? "", city: p.city ?? "", bio: p.bio ?? "", english_level: p.english_level ?? "básico", topics: p.topics ?? [], avatar: avatarUrl ?? p.avatar ?? "", age: p.age ? String(p.age) : "" });
     setEditing(true);
   };
 
@@ -106,6 +114,7 @@ export default function PerfilPage() {
       name: form.name, city: form.city, bio: form.bio,
       english_level: form.english_level, topics: form.topics,
       avatar: form.avatar || form.name.charAt(0).toUpperCase(),
+      age: form.age ? parseInt(form.age) : null,
     }).eq("id", profile.id);
     setSaving(false);
     setEditing(false);
@@ -116,6 +125,28 @@ export default function PerfilPage() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/auth");
+  };
+
+  const handleChangePass = async () => {
+    if (passForm.newPass !== passForm.confirmPass) {
+      setPassMsg({ ok: false, text: "Las contraseñas no coinciden." });
+      return;
+    }
+    if (passForm.newPass.length < 6) {
+      setPassMsg({ ok: false, text: "Mínimo 6 caracteres." });
+      return;
+    }
+    setSavingPass(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password: passForm.newPass });
+    setSavingPass(false);
+    if (error) {
+      setPassMsg({ ok: false, text: "Error: " + error.message });
+    } else {
+      setPassMsg({ ok: true, text: "¡Contraseña actualizada!" });
+      setPassForm({ newPass: "", confirmPass: "" });
+      setTimeout(() => { setChangingPass(false); setPassMsg(null); }, 2000);
+    }
   };
 
   const toggleTopic = (t: string) => setForm((f) => f ? ({
@@ -153,7 +184,12 @@ export default function PerfilPage() {
                   <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.65rem", fontWeight: 700, color: "#1E1B2E", lineHeight: 1.1 }}>
                     {p?.name}
                   </h1>
-                  {p?.city && <p style={{ color: "#8E8AA0", fontSize: ".86rem", marginTop: 3 }}>📍 {p.city}</p>}
+                  {(p?.city || p?.age) && (
+                    <p style={{ color: "#8E8AA0", fontSize: ".86rem", marginTop: 3 }}>
+                      {p?.city && <>📍 {p.city}</>}{p?.city && p?.age ? " · " : ""}{p?.age && <>{p.age} años</>}
+                    </p>
+                  )}
+                  {userEmail && <p style={{ color: "#A09CB5", fontSize: ".8rem", marginTop: 2 }}>✉️ {userEmail}</p>}
                 </div>
                 {!editing && (
                   <button onClick={startEdit}
@@ -396,6 +432,51 @@ export default function PerfilPage() {
           );
         })()}
 
+        {/* Cambiar contraseña */}
+        <div className="rounded-3xl overflow-hidden" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.1)", boxShadow: "0 2px 12px rgba(132,94,194,.06)" }}>
+          <button onClick={() => { setChangingPass((v) => !v); setPassMsg(null); }}
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-purple-50 transition-colors"
+            style={{ fontFamily: "'Nunito', sans-serif", background: "none", border: "none", cursor: "pointer" }}>
+            <span className="flex items-center gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#845EC2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span className="text-sm font-bold" style={{ color: "#1E1B2E" }}>Cambiar contraseña</span>
+            </span>
+            <span style={{ color: "#A09CB5", fontSize: ".85rem" }}>{changingPass ? "▲" : "▼"}</span>
+          </button>
+
+          {changingPass && (
+            <div className="px-6 pb-5 space-y-3" style={{ borderTop: "1px solid rgba(132,94,194,.08)" }}>
+              <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  { key: "newPass", label: "Nueva contraseña", placeholder: "Mínimo 6 caracteres" },
+                  { key: "confirmPass", label: "Confirmar contraseña", placeholder: "Repetí la contraseña" },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 5 }}>{label}</label>
+                    <input type="password" value={(passForm as any)[key]} placeholder={placeholder}
+                      onChange={(e) => setPassForm((f) => ({ ...f, [key]: e.target.value }))}
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: 14, border: "1.5px solid rgba(132,94,194,.15)", background: "var(--bg)", fontFamily: "'Nunito', sans-serif", fontSize: ".9rem", color: "#1E1B2E", outline: "none", boxSizing: "border-box" }}
+                      onFocus={(e) => (e.target.style.borderColor = "#845EC2")}
+                      onBlur={(e) => (e.target.style.borderColor = "rgba(132,94,194,.15)")} />
+                  </div>
+                ))}
+              </div>
+              {passMsg && (
+                <p style={{ fontSize: ".82rem", fontWeight: 700, color: passMsg.ok ? "#06D6A0" : "#FF6B6B" }}>
+                  {passMsg.ok ? "✓ " : "✕ "}{passMsg.text}
+                </p>
+              )}
+              <button onClick={handleChangePass} disabled={savingPass}
+                className="w-full py-3 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg, #845EC2, #6d4aab)", fontFamily: "'Nunito', sans-serif" }}>
+                {savingPass ? "Guardando…" : "Actualizar contraseña"}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Logout */}
         <button onClick={handleLogout}
           className="w-full py-3 rounded-2xl text-sm font-bold hover:opacity-80 transition-opacity"
@@ -444,7 +525,7 @@ function EmptyState({ icon, text, link, linkText }: { icon: string; text: string
 function EditForm({ form, setForm, saving, onSave, onCancel, toggleTopic }: any) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {[{ label: "Nombre", key: "name", placeholder: "Tu nombre" }, { label: "Ciudad", key: "city", placeholder: "Buenos Aires" }].map(({ label, key, placeholder }) => (
+      {[{ label: "Nombre", key: "name", placeholder: "Tu nombre" }, { label: "Ciudad", key: "city", placeholder: "Buenos Aires" }].map(({ label, key, placeholder }: { label: string; key: string; placeholder: string }) => (
         <div key={key}>
           <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 5 }}>{label}</label>
           <input type="text" value={form[key] ?? ""} placeholder={placeholder}
@@ -454,6 +535,14 @@ function EditForm({ form, setForm, saving, onSave, onCancel, toggleTopic }: any)
             onBlur={(e) => (e.target.style.borderColor = "rgba(132,94,194,.15)")} />
         </div>
       ))}
+      <div>
+        <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 5 }}>Edad</label>
+        <input type="number" value={form.age ?? ""} placeholder="35" min={10} max={99}
+          onChange={(e) => setForm((f: any) => ({ ...f, age: e.target.value }))}
+          style={{ width: "100%", padding: "10px 14px", borderRadius: 14, border: "1.5px solid rgba(132,94,194,.15)", background: "var(--bg)", fontFamily: "'Nunito', sans-serif", fontSize: ".9rem", color: "#1E1B2E", outline: "none" }}
+          onFocus={(e) => (e.target.style.borderColor = "#845EC2")}
+          onBlur={(e) => (e.target.style.borderColor = "rgba(132,94,194,.15)")} />
+      </div>
       <div>
         <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 5 }}>Bio</label>
         <textarea value={form.bio ?? ""} placeholder="Contá algo de vos…" rows={2}

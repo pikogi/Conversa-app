@@ -10,6 +10,7 @@ export type Profile = {
   role: "user" | "facilitator";
   english_level: string;
   gender?: string | null;
+  age?: number | null;
 };
 
 export function facilitatorLabel(gender?: string | null) {

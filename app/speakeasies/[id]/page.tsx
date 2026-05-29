@@ -81,7 +81,7 @@ export default function SpeakeasyDetailPage() {
     // Enviar email de confirmación
     const { data: { user } } = await supabase.auth.getUser();
     if (user?.email) {
-      fetch("/api/send-invite", {
+      const res = await fetch("/api/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,8 +93,10 @@ export default function SpeakeasyDetailPage() {
           meetingUrl: speakeasy.meeting_url,
           level: speakeasy.level,
           topic: speakeasy.topic,
+          type: "join",
         }),
       });
+      if (!res.ok) console.error("Error enviando email de join:", await res.text());
     }
 
     // Refetch
