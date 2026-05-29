@@ -41,6 +41,8 @@ export default function PerfilPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<{ name: string; city: string; bio: string; english_level: string; topics: string[]; avatar: string } | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (profileLoading || !profile) return;
@@ -77,9 +79,22 @@ export default function PerfilPage() {
     fetchData();
   }, [profile, profileLoading]);
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+    setUploadingPhoto(true);
+    const supabase = createClient();
+    await supabase.storage.from("avatars").upload(profile.id, file, { upsert: true, contentType: file.type });
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(profile.id);
+    const url = `${publicUrl}?t=${Date.now()}`;
+    await supabase.from("profiles").update({ avatar: url }).eq("id", profile.id);
+    setAvatarUrl(url);
+    setUploadingPhoto(false);
+  };
+
   const startEdit = () => {
     if (!profile) return;
-    setForm({ name: p.name ?? "", city: p.city ?? "", bio: p.bio ?? "", english_level: p.english_level ?? "básico", topics: p.topics ?? [], avatar: p.avatar ?? "" });
+    setForm({ name: p.name ?? "", city: p.city ?? "", bio: p.bio ?? "", english_level: p.english_level ?? "básico", topics: p.topics ?? [], avatar: avatarUrl ?? p.avatar ?? "" });
     setEditing(true);
   };
 
@@ -120,7 +135,18 @@ export default function PerfilPage() {
         {/* ── Perfil header ── */}
         <div className="rounded-3xl p-6 sm:p-8" style={{ background: "white", border: "1.5px solid rgba(132,94,194,.1)", boxShadow: "0 4px 24px rgba(132,94,194,.07)" }}>
           <div className="flex items-start gap-5 mb-5">
-            <Avatar avatar={p?.avatar ?? "?"} size={64} gradient="linear-gradient(135deg, #FF6B6B, #FF9E4F)" style={{ borderRadius: 16 }} />
+            <label style={{ position: "relative", cursor: "pointer", flexShrink: 0, display: "block" }} title="Cambiar foto">
+              <Avatar avatar={avatarUrl ?? p?.avatar ?? "?"} size={64} gradient="linear-gradient(135deg, #FF6B6B, #FF9E4F)" style={{ borderRadius: 16 }} />
+              <span style={{ position: "absolute", inset: 0, borderRadius: 16, background: "rgba(0,0,0,.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: uploadingPhoto ? 1 : 0, transition: "opacity .15s" }}
+                onMouseEnter={(e) => { if (!uploadingPhoto) (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+                onMouseLeave={(e) => { if (!uploadingPhoto) (e.currentTarget as HTMLElement).style.opacity = "0"; }}>
+                {uploadingPhoto
+                  ? <span style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,.4)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "block" }} />
+                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                }
+              </span>
+              <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} disabled={uploadingPhoto} />
+            </label>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -191,7 +217,7 @@ export default function PerfilPage() {
               )}
             </>
           ) : (
-            <EditForm form={form!} setForm={setForm} saving={saving} onSave={saveEdit} onCancel={() => setEditing(false)} toggleTopic={toggleTopic} profileId={profile!.id} onAvatarChange={(url: string) => setForm((f) => f ? { ...f, avatar: url } : f)} />
+            <EditForm form={form!} setForm={setForm} saving={saving} onSave={saveEdit} onCancel={() => setEditing(false)} toggleTopic={toggleTopic} />
           )}
         </div>
 
@@ -415,34 +441,9 @@ function EmptyState({ icon, text, link, linkText }: { icon: string; text: string
   );
 }
 
-function EditForm({ form, setForm, saving, onSave, onCancel, toggleTopic, profileId, onAvatarChange }: any) {
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !profileId) return;
-    setUploadingPhoto(true);
-    const supabase = createClient();
-    await supabase.storage.from("avatars").upload(profileId, file, { upsert: true, contentType: file.type });
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(profileId);
-    onAvatarChange(`${publicUrl}?t=${Date.now()}`);
-    setUploadingPhoto(false);
-  };
-
+function EditForm({ form, setForm, saving, onSave, onCancel, toggleTopic }: any) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Photo upload */}
-      <div>
-        <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 8 }}>Foto de perfil</label>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <Avatar avatar={form.avatar || form.name?.charAt(0)?.toUpperCase() || "?"} size={56} style={{ borderRadius: 14 }} />
-          <label style={{ padding: "8px 16px", borderRadius: 50, border: "1.5px solid rgba(132,94,194,.2)", background: "rgba(132,94,194,.05)", color: "#845EC2", fontFamily: "'Nunito', sans-serif", fontSize: ".82rem", fontWeight: 700, cursor: uploadingPhoto ? "default" : "pointer", opacity: uploadingPhoto ? 0.6 : 1 }}>
-            {uploadingPhoto ? "Subiendo…" : "Cambiar foto"}
-            <input type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoChange} disabled={uploadingPhoto} />
-          </label>
-        </div>
-      </div>
-
       {[{ label: "Nombre", key: "name", placeholder: "Tu nombre" }, { label: "Ciudad", key: "city", placeholder: "Buenos Aires" }].map(({ label, key, placeholder }) => (
         <div key={key}>
           <label style={{ display: "block", fontSize: ".8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 5 }}>{label}</label>
