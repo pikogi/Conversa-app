@@ -36,9 +36,9 @@ const QUIZ = [
 ];
 
 const LEVEL_RESULT: Record<Level, { emoji: string; title: string; desc: string; color: string; bg: string }> = {
-  básico:     { emoji: "🌱", title: "Básico",     color: "#06D6A0", bg: "rgba(6,214,160,.08)",    desc: "Estás arrancando y está perfecto. En Conversa vas a practicar en un ambiente sin presión donde podés equivocarte con confianza." },
-  intermedio: { emoji: "🚀", title: "Intermedio", color: "#FF9E4F", bg: "rgba(255,158,79,.08)",   desc: "Ya podés mantener una conversación. En Conversa vas a ganar fluidez hablando de temas que te interesan." },
-  avanzado:   { emoji: "⚡", title: "Avanzado",   color: "#845EC2", bg: "rgba(132,94,194,.08)",   desc: "Tu inglés es sólido. En Conversa vas a usarlo en conversaciones profundas y conocer personas de tu nivel." },
+  básico:     { emoji: "🌱", title: "Básico",     color: "#06D6A0", bg: "rgba(6,214,160,.08)",    desc: "Estás arrancando y está perfecto. En Conversa practicás en un ambiente sin presión donde equivocarse es parte del proceso." },
+  intermedio: { emoji: "🚀", title: "Intermedio", color: "#FF9E4F", bg: "rgba(255,158,79,.08)",   desc: "Ya podés mantener una conversación. En Conversa vas a ganar fluidez real hablando de temas que te interesan." },
+  avanzado:   { emoji: "⚡", title: "Avanzado",   color: "#845EC2", bg: "rgba(132,94,194,.08)",   desc: "Tu inglés es sólido. En Conversa vas a usarlo en conversaciones profundas sobre temas que realmente te importan." },
 };
 
 const TOPICS = [
@@ -200,21 +200,24 @@ export default function AuthPage() {
             Hello,<br />Stranger.
           </p>
           <p style={{ color: "rgba(255,255,255,.6)", fontSize: "1rem", lineHeight: 1.7, maxWidth: 360 }}>
-            La excusa es aprender inglés.<br />
-            La realidad es conocer personas increíbles.
+            Dejá de estudiar inglés.<br />
+            Empezá a hablarlo.
+          </p>
+          <p style={{ color: "rgba(255,255,255,.4)", fontSize: ".88rem", lineHeight: 1.7, maxWidth: 360, marginTop: 10 }}>
+            Grupos pequeños, temas que te interesan, sin presión de hablar perfecto.
           </p>
         </div>
 
         {/* Testimonial */}
         <div style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.12)", borderRadius: 24, padding: "24px", position: "relative", zIndex: 1 }}>
           <p style={{ color: "rgba(255,255,255,.85)", fontSize: ".9rem", lineHeight: 1.7, fontStyle: "italic", marginBottom: 16 }}>
-            "Entré con miedo de hablar mal inglés y me fui con el número de dos personas increíbles."
+            "Después de 3 sesiones perdí el miedo de hablar. Ahora uso el inglés en mi trabajo todos los días."
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B, #FF9E4F)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: ".85rem", fontWeight: 700 }}>M</div>
             <div>
               <p style={{ color: "white", fontSize: ".85rem", fontWeight: 700 }}>Martina R.</p>
-              <p style={{ color: "rgba(255,255,255,.4)", fontSize: ".75rem" }}>38 años · Buenos Aires</p>
+              <p style={{ color: "rgba(255,255,255,.4)", fontSize: ".75rem" }}>31 años · Buenos Aires</p>
             </div>
           </div>
         </div>
@@ -448,7 +451,7 @@ export default function AuthPage() {
                   <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: "1.8rem", fontWeight: 700, color: "#1E1B2E", marginBottom: 4 }}>
                     Bienvenido de vuelta
                   </h2>
-                  <p style={{ color: "#8E8AA0", fontSize: ".9rem" }}>¿Hay un Speakeasy esperándote?</p>
+                  <p style={{ color: "#8E8AA0", fontSize: ".9rem" }}>Tu próxima conversación te está esperando.</p>
                 </div>
 
                 <Field label="Email" id="login-email">
